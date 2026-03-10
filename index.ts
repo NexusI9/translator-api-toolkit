@@ -3,26 +3,27 @@ import path from "path";
 import {
 	BATCH_SIZE,
 	INPUT_FOLDER,
-	LOCALES,
-	LOG_FOLDER,
 	SOURCE_LANG,
 	REGEXP_PROTECTED,
 	REGEXP_VARIABLE,
 	TRANSLATION_FILTERS,
-	DEFAULT_METHOD
 } from "./constants";
 import { Cache } from "./cache";
 import { JSONProcessor, } from "./json-processor";
 import { APIManager } from "./api/api-manager";
 import { Logger } from "./logger";
-import { Dico, Method, StringDico } from "./types";
-import { getArgs, getJsonFiles, trimPathLocale, validateLocale } from "./utils";
+import { Dico, StringDico } from "./types";
+import { getJsonFiles, trimPathLocale } from "./utils";
+import { ArgsManager } from "args";
+
+import readline from "node:readline/promises";
+import { stdin as input, stdout as output } from "node:process";
 
 const cache = new Cache();
 const apiManager = new APIManager();
 const jsonProcessor = new JSONProcessor();
 const logger = new Logger();
-
+const args = new ArgsManager();
 
 /**
 		Filter out the (flattened) keys that already exists so we don't translate them twice.
@@ -65,25 +66,8 @@ function prepareBatch(flatSource: Dico, flatTarget: Dico, localeCache: StringDic
 }
 
 async function translateBatch(
-	{
-		locale,
-		toTranslate,
-		flatTarget,
-		localeCache,
-		dryRun = false,
-		verbose = false,
-		writeLog = false,
-	}:
-		{
-			locale: string,
-			toTranslate: Dico,
-			flatTarget: Dico,
-			localeCache: StringDico,
-			method: Method,
-			dryRun?: Boolean,
-			verbose?: Boolean,
-			writeLog?: Boolean,
-		}) {
+	{ toTranslate, flatTarget, localeCache, }:
+		{ toTranslate: Dico, flatTarget: Dico, localeCache: StringDico }, args: ArgsManager) {
 
 	const keys = Object.keys(toTranslate);
 	for (let i = 0; i < keys.length; i += BATCH_SIZE) {
@@ -94,7 +78,7 @@ async function translateBatch(
 		const batchValues = batchKeys.map(k => toTranslate[k]) as string[];
 
 		// call API with batch of strings
-		const translated = await apiManager.call(batchValues, locale);
+		const translated = await apiManager.call(batchValues, args.locale);
 
 		translated.forEach((t, index) => {
 			const key = batchKeys[index];
@@ -105,20 +89,20 @@ async function translateBatch(
 
 			localeCache[sourceText] = restored;
 
-			if (writeLog)
-				logger.push(locale, String(sourceText), String(restored));
+			if (args.log)
+				logger.push(args.locale, String(sourceText), String(restored));
 		});
 	}
 
 
 }
 
-async function processLocale(file: string, locale: string) {
+async function processLocale(file: string, args: ArgsManager) {
 
 	console.log(`Processing file ${file}...`);
 
 	if (!file.endsWith(".json"))
-		return console.error(`The provided file "${file}" needs to be a JSON. Skipping.`);
+		console.error(`The provided file "${file}" needs to be a JSON. Skipping.`);
 
 
 	// Get source file and flatten it
@@ -131,26 +115,24 @@ async function processLocale(file: string, locale: string) {
 	const flatSource = jsonProcessor.flatten(sourceJson);
 
 	// Get target file and flatten it
-	const targetPath = path.join(INPUT_FOLDER, locale, file);
-	const targetJson = await jsonProcessor.readFileLocale(locale, file);
+	const targetPath = path.join(INPUT_FOLDER, args.locale, file);
+	const targetJson = await jsonProcessor.readFileLocale(args.locale, file);
 
 	if (!targetJson)
 		return;
 
 	const flatTarget = jsonProcessor.flatten(targetJson);
-	const localeCache = await cache.load(locale);
+	const localeCache = await cache.load(args.locale);
 
 	const toTranslate = prepareBatch(flatSource, flatTarget, localeCache);
 
 	await translateBatch({
-		locale,
 		toTranslate,
 		flatTarget,
 		localeCache,
-		method: DEFAULT_METHOD,
-	});
+	}, args);
 
-	await cache.save(locale, cache);
+	await cache.save(args.locale, cache);
 
 	const rebuilt = jsonProcessor.unflatten(flatTarget);
 
@@ -160,45 +142,42 @@ async function processLocale(file: string, locale: string) {
 }
 
 
-/**
- * --local : the lang
- * --input : folder or file
- * --output : output dir
- * --api
- * -log : enable logs
- * -verbose : enable verbose
- * -dry : dry run (no call to APIs)
- */
+
 async function main() {
 
-	let { locale, log, input, output } = getArgs();
 
-	locale = validateLocale(locale);
-	if (!locale)
-		return;
-
-	if (!input)
-		return console.error("No folder or file where input, make sure to use the argument --input=FILE_PATH|DIR_PATH.");;
+	// Sanitize arguments and setup configuration
+	args.decode();
+	await args.validate();
 
 
-	if (!output)
-		return console.error("No folder or file where set as output, make sure to use the argument --output=DIR_PATH.");
+	// Output configuration and ssk for confirmation before going on
+	args.print();
+	const rl = readline.createInterface({ input, output });
+	const answer = await rl.question("Confirm? (y/n) ");
+	rl.close();
+	if (answer.toLowerCase() === "n")
+		return console.log("Cancelled.");
 
 
-	// Determing input type (dir or file)
-	const stat = await fs.stat(input);
-	if (stat.isFile()) {
-		await processLocale(input, locale);
-	} else if (stat.isDirectory()) {
-		const files = await getJsonFiles(path.join(input, SOURCE_LANG));
-		for (const file of files)
-			await processLocale(file, locale);
-	} else {
-		return console.error(`The provided input "${input}" is not valid.`);
+	// Translate
+	const inputType = await args.getInputType();
+	switch (inputType) {
+
+		case "FILE":
+			await processLocale(args.input, args);
+			break;
+
+		case "DIR":
+			const files = await getJsonFiles(args.input);
+			for (const file of files)
+				await processLocale(file, args);
+			break;
+
 	}
 
-
-	if (log) {
+	// Write Logs
+	if (args.log) {
 		await logger.write();
 		await logger.writeCSV();
 	}
