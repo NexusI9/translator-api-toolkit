@@ -2,7 +2,6 @@ import fs from "fs/promises";
 import path from "path";
 import {
 	BATCH_SIZE,
-	INPUT_FOLDER,
 	SOURCE_LANG,
 	REGEXP_PROTECTED,
 	REGEXP_VARIABLE,
@@ -13,8 +12,8 @@ import { JSONProcessor, } from "./json-processor";
 import { APIManager } from "./api/api-manager";
 import { Logger } from "./logger";
 import { Dico, StringDico } from "./types";
-import { getJsonFiles, trimPathLocale } from "./utils";
-import { ArgsManager } from "args";
+import { getJsonFiles, getTargetPath } from "./utils";
+import { ArgsManager } from "./args";
 
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
@@ -52,12 +51,10 @@ function prepareBatch(flatSource: Dico, flatTarget: Dico, localeCache: StringDic
 			continue;
 		}
 
-
 		const protectedText = typeof value === "string" ? jsonProcessor.protectVariables(value, [REGEXP_VARIABLE, REGEXP_PROTECTED]) : value;
 
 		// add it th the batch list
 		toTranslate[key] = protectedText;
-
 	}
 
 
@@ -78,7 +75,7 @@ async function translateBatch(
 		const batchValues = batchKeys.map(k => toTranslate[k]) as string[];
 
 		// call API with batch of strings
-		const translated = await apiManager.call(batchValues, args.locale);
+		const translated = await apiManager.call(args.api, batchValues, args.locale, args.maxChar);
 
 		translated.forEach((t, index) => {
 			const key = batchKeys[index];
@@ -105,21 +102,19 @@ async function processLocale(file: string, args: ArgsManager) {
 		console.error(`The provided file "${file}" needs to be a JSON. Skipping.`);
 
 
-	// Get source file and flatten it
-	file = trimPathLocale(file);
-	const sourceJson = await jsonProcessor.readFileLocale(SOURCE_LANG, file);
+	const sourceJson = await jsonProcessor.readOrCreate(file);
 
 	if (!sourceJson)
-		return;
+		return console.error(`Unable to read the source file: "${file}". Skipping.`);
 
 	const flatSource = jsonProcessor.flatten(sourceJson);
 
 	// Get target file and flatten it
-	const targetPath = path.join(INPUT_FOLDER, args.locale, file);
-	const targetJson = await jsonProcessor.readFileLocale(args.locale, file);
+	const targetPath = await getTargetPath(file, args);
+	const targetJson = await jsonProcessor.readOrCreate(targetPath);
 
 	if (!targetJson)
-		return;
+		return console.error(`Unable to read the target file: "${targetPath}". Skipping.`);
 
 	const flatTarget = jsonProcessor.flatten(targetJson);
 	const localeCache = await cache.load(args.locale);
@@ -157,7 +152,7 @@ async function main() {
 	const answer = await rl.question("Confirm? (y/n) ");
 	rl.close();
 	if (answer.toLowerCase() === "n")
-		return console.log("Cancelled.");
+		return console.log("Cancelled. Exiting program...");
 
 
 	// Translate
@@ -173,7 +168,6 @@ async function main() {
 			for (const file of files)
 				await processLocale(file, args);
 			break;
-
 	}
 
 	// Write Logs

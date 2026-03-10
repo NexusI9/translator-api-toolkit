@@ -4,7 +4,8 @@
 	"description": "Tool to translate json content via API",
 	"main": "index.ts",
 	"scripts": {
-		"start": "tsx index.ts"
+		"start": "tsx src/index.ts",
+		"example": "tsx src/index.ts -l --locale=zh-TW --input=./example/en-US/ --output=./example/"
 	},
 	"author": "Nassim El Khantour",
 	"license": "ISC",

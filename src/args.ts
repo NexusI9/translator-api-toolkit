@@ -75,17 +75,15 @@ export class ArgsManager {
 
 		// 1. Exact locale match (case-insensitive)
 		const exact = locales.find(l => l.toLowerCase() === input);
-		if (exact) {
-			console.log(`Using locale: ${exact}`);
+		if (exact)
 			return exact as keyof typeof LOCALES;
-		}
+
 
 		// 2. Short language match (e.g. "en" -> "en-US")
 		const short = locales.find(l => l.toLowerCase().startsWith(input + "-"));
-		if (short) {
-			console.log(`Using locale: ${short}`);
+		if (short)
 			return short as keyof typeof LOCALES;
-		}
+
 
 
 		throw new Error(
@@ -124,15 +122,15 @@ export class ArgsManager {
 
 	print() {
 
-		console.log([
-			["Locale:", this.locale].join("\t"),
-			["Input:", this.input].join("\t"),
-			["Output:", this.output].join("\t"),
-			["Characters Limit:", this.maxChar].join("\t"),
-			["Logs:", this.l].join("\t"),
-			["Verbose:", this.v].join("\t"),
-			["Dry Run:", this.d].join("\t")
-		].join("\n"));
+		console.table({
+			["Locale"]: this.locale,
+			["Input"]: this.input,
+			["Output"]: this.output,
+			["Characters Limit"]: this.maxChar,
+			["Logs"]: this.l,
+			["Verbose"]: this.v,
+			["Dry Run"]: this.d,
+		});
 
 	}
 

@@ -1,4 +1,4 @@
-import { INPUT_FOLDER, KEY_SPLIT_CHAR } from "./constants";
+import { KEY_SPLIT_CHAR } from "./constants";
 import fs from "fs/promises";
 import path from "path";
 import { Dico, RecordFilter } from "./types";
@@ -10,25 +10,24 @@ export class JSONProcessor {
 	/**
 		 Read a specific file in a given locale. Return undefined if not found.
 	 */
-	async readFileLocale(locale: string, filename: string, root: string = INPUT_FOLDER) {
+	async readOrCreate(filename: string) {
 
-		const fullPath = path.join(root, locale, filename);
 		let json: any = {};
 
 		try {
-			json = JSON.parse(await fs.readFile(fullPath, "utf8"));
+			json = JSON.parse(await fs.readFile(filename, "utf8"));
 		} catch (err: any) {
 
 			if (err.code === "ENOENT") {
 
 				// File does not exist, create it
-				await fs.mkdir(path.dirname(fullPath), { recursive: true });
-				await fs.writeFile(fullPath, "{}");
+				await fs.mkdir(path.dirname(filename), { recursive: true });
+				await fs.writeFile(filename, "{}");
 
 				return {};
 			}
 
-			console.error(`Error while attempting to parse the file "${fullPath}".`);
+			console.error(`Error while attempting to parse the file "${filename}".`);
 			return undefined;
 		}
 

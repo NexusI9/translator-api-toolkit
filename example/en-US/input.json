@@ -1,0 +1,37 @@
+{
+	"home": {
+		"label": "Home",
+		"header": {
+			"title": "Browse Latest Web Design Tool",
+			"subtitle": "Improve and ease your workflow with extensive design tools"
+		}
+	},
+	"templates": {
+		"label": "Templates",
+		"header": {
+			"title": "Templates",
+			"subtitle": "The latest documents to start your new design projects or next presentation"
+		}
+	},
+	"modules": {
+		"label": "Modules",
+		"header": {
+			"title": "Modules",
+			"subtitle": "The interactive library gathering all kinds of engaging visual effects"
+		}
+	},
+	"documents": {
+		"label": "Documents",
+		"header": {
+			"title": "Documents",
+			"subtitle": "All the documents useful for your project development"
+		}
+	},
+	"plugins": {
+		"label": "Plugins",
+		"header": {
+			"title": "Plugins",
+			"subtitle": "The usefull plugins to boost your creativity"
+		}
+	}
+}
