@@ -2,7 +2,6 @@ import fs from "fs/promises";
 import path from "path";
 import {
 	BATCH_SIZE,
-	SOURCE_LANG,
 	REGEXP_PROTECTED,
 	REGEXP_VARIABLE,
 	TRANSLATION_FILTERS,
@@ -11,8 +10,8 @@ import { Cache } from "./cache";
 import { JSONProcessor, } from "./json-processor";
 import { APIManager } from "./api/api-manager";
 import { Logger } from "./logger";
-import { Dico, StringDico } from "./types";
-import { getJsonFiles, getTargetPath } from "./utils";
+import { Dico } from "./types";
+import { getJsonFiles, getTargetPath, readOrCreateFile } from "./utils";
 import { ArgsManager } from "./args";
 
 import readline from "node:readline/promises";
@@ -27,9 +26,13 @@ const args = new ArgsManager();
 /**
 		Filter out the (flattened) keys that already exists so we don't translate them twice.
  */
-function prepareBatch(flatSource: Dico, flatTarget: Dico, localeCache: StringDico) {
+function prepareBatch(flatSource: Dico, flatTarget: Dico, cache: Cache, override: Boolean) {
 
 	const filteredSource = jsonProcessor.filter(flatSource, TRANSLATION_FILTERS);
+
+	// If override option, we don't filter out the existing key, we simple retranslate everything
+	if (override)
+		return flatSource;
 
 	// Remove already translated key (already existing in the target file)
 	const missingKeys = Object.keys(filteredSource).filter((k) => {
@@ -46,8 +49,9 @@ function prepareBatch(flatSource: Dico, flatTarget: Dico, localeCache: StringDic
 		const value = filteredSource[key as keyof typeof filteredSource];
 
 		// continue is exists in cache
-		if (localeCache[value as keyof typeof localeCache]) {
-			flatTarget[key as keyof typeof flatTarget] = localeCache[value as keyof typeof localeCache];
+		const cachedValue = cache.find(args.locale, String(value));
+		if (cachedValue) {
+			flatTarget[key as keyof typeof flatTarget] = cachedValue;
 			continue;
 		}
 
@@ -57,14 +61,13 @@ function prepareBatch(flatSource: Dico, flatTarget: Dico, localeCache: StringDic
 		toTranslate[key] = protectedText;
 	}
 
-
 	return toTranslate;
 
 }
 
 async function translateBatch(
-	{ toTranslate, flatTarget, localeCache, }:
-		{ toTranslate: Dico, flatTarget: Dico, localeCache: StringDico }, args: ArgsManager) {
+	{ toTranslate, flatTarget, cache, }:
+		{ toTranslate: Dico, flatTarget: Dico, cache: Cache }, args: ArgsManager) {
 
 	const keys = Object.keys(toTranslate);
 	for (let i = 0; i < keys.length; i += BATCH_SIZE) {
@@ -84,7 +87,8 @@ async function translateBatch(
 			const restored = jsonProcessor.restoreVariables(t, index);
 			flatTarget[key] = restored;
 
-			localeCache[sourceText] = restored;
+			cache.insert(args.locale, String(sourceText), restored);
+
 
 			if (args.log)
 				logger.push(args.locale, String(sourceText), String(restored));
@@ -102,7 +106,7 @@ async function processLocale(file: string, args: ArgsManager) {
 		console.error(`The provided file "${file}" needs to be a JSON. Skipping.`);
 
 
-	const sourceJson = await jsonProcessor.readOrCreate(file);
+	const sourceJson = await readOrCreateFile(file);
 
 	if (!sourceJson)
 		return console.error(`Unable to read the source file: "${file}". Skipping.`);
@@ -111,23 +115,23 @@ async function processLocale(file: string, args: ArgsManager) {
 
 	// Get target file and flatten it
 	const targetPath = await getTargetPath(file, args);
-	const targetJson = await jsonProcessor.readOrCreate(targetPath);
+	const targetJson = await readOrCreateFile(targetPath);
 
 	if (!targetJson)
 		return console.error(`Unable to read the target file: "${targetPath}". Skipping.`);
 
 	const flatTarget = jsonProcessor.flatten(targetJson);
-	const localeCache = await cache.load(args.locale);
+	await cache.load(args.locale);
 
-	const toTranslate = prepareBatch(flatSource, flatTarget, localeCache);
+	const toTranslate = prepareBatch(flatSource, flatTarget, cache, args.override);
 
 	await translateBatch({
 		toTranslate,
 		flatTarget,
-		localeCache,
+		cache,
 	}, args);
 
-	await cache.save(args.locale, cache);
+	await cache.save(args.locale);
 
 	const rebuilt = jsonProcessor.unflatten(flatTarget);
 
@@ -175,6 +179,10 @@ async function main() {
 		await logger.write();
 		await logger.writeCSV();
 	}
+
+	console.log('------------------------------------------');
+	console.log(`Total characters translated: ${logger.charactersCount}`);
+	console.log(`Cache was hit ${cache.stat.hit} times and saved ${cache.stat.characters} characters`);
 }
 
 main();

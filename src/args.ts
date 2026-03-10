@@ -21,6 +21,8 @@ export class ArgsManager {
 	v: Boolean;
 	// Enable DryRun (do not do any API calls)
 	d: Boolean;
+	// Override and retranslate already translated keys in the target file 
+	o: Boolean;
 
 	constructor() {
 		this.locale = Object.keys(LOCALES)[0] as keyof typeof LOCALES;
@@ -30,6 +32,7 @@ export class ArgsManager {
 		this.l = false;
 		this.v = false;
 		this.d = false;
+		this.o = false;
 		this.maxChar = 0;
 	}
 
@@ -130,6 +133,7 @@ export class ArgsManager {
 			["Logs"]: this.l,
 			["Verbose"]: this.v,
 			["Dry Run"]: this.d,
+			["Override"]: this.o,
 		});
 
 	}
@@ -145,6 +149,10 @@ export class ArgsManager {
 
 	get dryRun() {
 		return this.d
+	}
+
+	get override() {
+		return this.o;
 	}
 
 

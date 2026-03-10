@@ -35,8 +35,6 @@ export class Logger {
 		const logList = this.list.map(({ locale, source, result }) => `[${locale}] ${source} -> ${result} (${source.length} chars)`);
 		await fs.writeFile(logFile, logList.join("\n") + summary, "utf8");
 
-		console.log(summary);
-
 	}
 
 	async writeCSV() {

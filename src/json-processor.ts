@@ -1,39 +1,10 @@
 import { KEY_SPLIT_CHAR } from "./constants";
-import fs from "fs/promises";
-import path from "path";
 import { Dico, RecordFilter } from "./types";
 
 export class JSONProcessor {
 
 	varsMap: string[][] = [];
 
-	/**
-		 Read a specific file in a given locale. Return undefined if not found.
-	 */
-	async readOrCreate(filename: string) {
-
-		let json: any = {};
-
-		try {
-			json = JSON.parse(await fs.readFile(filename, "utf8"));
-		} catch (err: any) {
-
-			if (err.code === "ENOENT") {
-
-				// File does not exist, create it
-				await fs.mkdir(path.dirname(filename), { recursive: true });
-				await fs.writeFile(filename, "{}");
-
-				return {};
-			}
-
-			console.error(`Error while attempting to parse the file "${filename}".`);
-			return undefined;
-		}
-
-		return json;
-
-	}
 
 	/**
 	Flatten the json structure:

@@ -41,3 +41,32 @@ export async function getTargetPath(file: string, args: { input: string; output:
 
 	return path.join(outputRoot, args.locale, relativePath);
 }
+
+
+/**
+	 Read a specific file. Create it if does not exists. Return undefined failed to create it.
+ */
+export async function readOrCreateFile(filename: string) {
+
+	let json: any = {};
+
+	try {
+		json = JSON.parse(await fs.readFile(filename, "utf8"));
+	} catch (err: any) {
+
+		if (err.code === "ENOENT") {
+
+			// File does not exist, create it
+			await fs.mkdir(path.dirname(filename), { recursive: true });
+			await fs.writeFile(filename, "{}");
+
+			return {};
+		}
+
+		console.error(`Error while attempting to parse the file "${filename}".`);
+		return undefined;
+	}
+
+	return json;
+
+}
