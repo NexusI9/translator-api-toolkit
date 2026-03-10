@@ -3,7 +3,6 @@ import fs from "fs/promises";
 
 import { CACHE_FOLDER } from "./constants";
 import { readOrCreateFile } from "./utils";
-import { Dico } from "./types";
 
 export class Cache {
 

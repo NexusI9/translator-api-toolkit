@@ -30,18 +30,16 @@ function prepareBatch(flatSource: Dico, flatTarget: Dico, cache: Cache, override
 
 	const filteredSource = jsonProcessor.filter(flatSource, TRANSLATION_FILTERS);
 
-	// If override option, we don't filter out the existing key, we simple retranslate everything
-	if (override)
-		return flatSource;
+	let missingKeys = Object.keys(filteredSource);
 
 	// Remove already translated key (already existing in the target file)
-	const missingKeys = Object.keys(filteredSource).filter((k) => {
-		const value = flatTarget[k as keyof typeof flatTarget];
-		return !value || typeof value === "string" && value.trim() === "";
-	});
+	if (!override)
+		missingKeys = Object.keys(filteredSource).filter((k) => {
+			const value = flatTarget[k as keyof typeof flatTarget];
+			return !value || typeof value === "string" && value.trim() === "";
+		});
 
 	const toTranslate: Dico = {};
-
 
 	// Prepare the batching array by ensuring source text is not already cached.
 	for (const key of missingKeys) {
