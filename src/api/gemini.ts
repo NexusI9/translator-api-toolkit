@@ -1,6 +1,4 @@
-function sleep(ms: number) {
-	return new Promise(resolve => setTimeout(resolve, ms));
-}
+import { sleep } from "src/utils";
 
 const SLEEP_TIME = 15000;
 const MAX_ATTEMPT = 5;

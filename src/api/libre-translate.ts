@@ -4,6 +4,7 @@ import { spawn } from "child_process";
 const LIBRE_TRANSLATE_LOADED_LOCALES = ["en", "fr", "zt"] as const;
 
 // Map standard locales to LibreTranslate format (the tricky one it zh-TW which doesn't simply become zh but zt)
+// See: https://docs.libretranslate.com/guides/supported_languages/
 const LIBRE_TRANSLATE_LOCALES_MAP: Partial<Record<keyof typeof LOCALES, typeof LIBRE_TRANSLATE_LOADED_LOCALES[number]>> = {
 	"en-US": "en",
 	"en-GB": "en",
@@ -87,7 +88,7 @@ async function isLibreRunning(serverURL: string) {
 }
 
 
-export default async function LibreTranslate(locale: string, strings: string[], attempt: number = 1) {
+export async function LibreTranslate(locale: string, strings: string[], attempt: number = 1) {
 
 	// Libre Translate Config
 	const localServerHost = process.env.LIBRE_TRANSLATE_SERVER_HOST;
@@ -113,7 +114,7 @@ export default async function LibreTranslate(locale: string, strings: string[], 
 	const targetLocale = LIBRE_TRANSLATE_LOCALES_MAP[locale as keyof typeof LOCALES];
 
 	if (!targetLocale)
-		throw new Error("No Server Host were found for Libre Translate, make sure the variable LIBRE_TRANSLATE_SERVER_PORT is set in .env");
+		throw new Error("Target language not supported by Libre Translate API.");
 
 	const res = await fetch(`${localServerURL}/translate`, {
 		method: "POST",
@@ -132,10 +133,10 @@ export default async function LibreTranslate(locale: string, strings: string[], 
 	/*
 	Typically return:
 			 {
-		 translatedText: '內容\n' +
-			 '瀏覽最新 Web 設計工具\n' +
-			 '使用繁多的設計工具改善和放宽工作流程\n' +
-			 '模板\n' 
+		            translatedText: '內容\n' +
+			          '瀏覽最新 Web 設計工具\n' +
+			          '使用繁多的設計工具改善和放宽工作流程\n' +
+			          '模板\n' 
 			 }
 	 */
 

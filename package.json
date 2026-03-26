@@ -6,7 +6,7 @@
 	"scripts": {
 		"start": "tsx src/index.ts",
 		"libre": "pipenv run libretranslate --load-only en,fr,zt --host 127.0.0.1 --port 5000",
-		"example": "tsx src/index.ts -l --input=./example/en-US/ --output=./example/"
+		"example": "tsx src/index.ts -l --input=./example/small/en-US/ --output=./example/small/"
 	},
 	"author": "Nassim El Khantour",
 	"license": "ISC",
@@ -16,6 +16,7 @@
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
+		"deepl-node": "^1.24.0",
 		"dotenv": "^17.3.1"
 	}
 }

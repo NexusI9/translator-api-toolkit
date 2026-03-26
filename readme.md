@@ -59,7 +59,8 @@ npm run start -- \
 
 | Argument | Description |
 |--------|--------|
-| --locale | Target locale (**BCP 47 format**, e.g. `en-US`, `fr-FR`, `zh-TW`) |
+| --sourceLocale | source locale (**BCP 47 format**, e.g. `en-US`, `fr-FR`, `zh-TW`) default is `en-US` |
+| --targetLocale | Target locale (**BCP 47 format**, e.g. `en-US`, `fr-FR`, `zh-TW`) default is `en-US` |
 | --input | Path to JSON file or directory to translate |
 | --output | Output directory (created if missing) |
 | --maxchar | Character translation limit (`0` = unlimited) |

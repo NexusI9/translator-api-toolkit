@@ -1,6 +1,7 @@
 import { Method } from "../types";
 import { Gemini } from "./gemini";
-import LibreTranslate from "./libre-translate";
+import { LibreTranslate } from "./libre-translate";
+import { Deepl } from "./deepl";
 
 export class APIManager {
 
@@ -45,13 +46,18 @@ export class APIManager {
 				result = strings;
 				break;
 
+			case "DEEPL":
+				result = await Deepl(locale, strings);
+				break;
+
+
 			case "LIBRE_TRANSLATE":
 				result = await LibreTranslate(locale, strings);
 				break;
 
 			case "UNDEFINED":
 			default:
-				throw new Error("No translatio API methods were defined, make sure to use the --api=METHOD argument.");
+				throw new Error("No valid translation API methods were defined, make sure to use the --api=METHOD argument.");
 
 		}
 

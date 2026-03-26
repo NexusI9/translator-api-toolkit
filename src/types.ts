@@ -1,5 +1,5 @@
 
-export type Method = "UNDEFINED" | "GEMINI" | "GOOGLE_CLOUD" | "LIBRE_TRANSLATE";
+export type Method = "UNDEFINED" | "GEMINI" | "GOOGLE_CLOUD" | "LIBRE_TRANSLATE" | "DEEPL";
 
 export type StringDico = Record<string, string>;
 export type Dico = Record<string, string | number>;
