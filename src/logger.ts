@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs/promises";
 import { LOG_FOLDER } from "./constants";
+import { Method } from "./types";
 
 export class Logger {
 
@@ -10,6 +11,8 @@ export class Logger {
 		result: string;
 	}[] = [];
 	charactersCount: number = 0;
+	elapsedTime: number = 0;
+	apiMethod: string | undefined;
 
 	/**
 	Push the source text and its translated result in the active log list and increase the character count according to the source text length.
@@ -30,7 +33,13 @@ export class Logger {
 			`translate-${Date.now()}.log`
 		);
 
-		const summary = `\nTotal characters translated: ${this.charactersCount}\n`;
+		let summary = `\nTotal characters translated: ${this.charactersCount}`;
+
+		if (this.elapsedTime)
+			summary += ` (${this.elapsedTime}ms)`;
+
+		if (this.apiMethod)
+			summary += ` using '${this.apiMethod}' api.\n`;
 
 		const logList = this.list.map(({ locale, source, result }) => `[${locale}] ${source} -> ${result} (${source.length} chars)`);
 		await fs.writeFile(logFile, logList.join("\n") + summary, "utf8");
@@ -67,6 +76,14 @@ export class Logger {
 
 		await fs.writeFile(csvFile, content, "utf8");
 
+	}
+
+	setElapsedTime(number: number) {
+		this.elapsedTime = number;
+	}
+
+	setApiMethod(method: Method) {
+		this.apiMethod = method;
 	}
 
 

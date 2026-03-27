@@ -1,7 +1,22 @@
-import { Method } from "../types";
+import { APIMethodFn, Method } from "../types";
+
+// Loading APIs Methods
 import { Gemini } from "./gemini";
 import { LibreTranslate } from "./libre-translate";
 import { Deepl } from "./deepl";
+import { GoogleCloud } from "./google-cloud";
+
+const METHOD_CALLBACK_UNDEFINED: APIMethodFn = async (_locale, _strings, _attempt) => {
+	throw new Error("No valid translation API methods were defined, make sure to use the --api=METHOD argument.");
+}
+
+const METHOD_CALLBACKS: Record<Method, APIMethodFn> = {
+	"UNDEFINED": METHOD_CALLBACK_UNDEFINED,
+	"DEEPL": Deepl,
+	"GEMINI": Gemini,
+	"GOOGLE_CLOUD": GoogleCloud,
+	"LIBRE_TRANSLATE": LibreTranslate,
+};
 
 export class APIManager {
 
@@ -35,31 +50,13 @@ export class APIManager {
 		if (characterLimit)
 			strings = this.cutByCharacterLimit(strings, this.#characterCount, characterLimit);
 
-		let result;
-		switch (method) {
+		const callback = METHOD_CALLBACKS[method];
 
-			case "GEMINI":
-				result = await Gemini(locale, strings);
-				break;
+		// if arguement method is invalid and no mapped callback found, then set it as UNDEFINED and throw error
+		if (!callback)
+			method = "UNDEFINED";
 
-			case "GOOGLE_CLOUD":
-				result = strings;
-				break;
-
-			case "DEEPL":
-				result = await Deepl(locale, strings);
-				break;
-
-
-			case "LIBRE_TRANSLATE":
-				result = await LibreTranslate(locale, strings);
-				break;
-
-			case "UNDEFINED":
-			default:
-				throw new Error("No valid translation API methods were defined, make sure to use the --api=METHOD argument.");
-
-		}
+		let result = await METHOD_CALLBACKS[method](locale, strings);
 
 		strings.forEach(string => this.#characterCount += string.length);
 		return result;

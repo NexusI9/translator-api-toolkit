@@ -26,4 +26,4 @@ interface RecordFilterListRules {
 
 export type RecordFilter = RecordFilterPresetRules | RecordFilterCustomRules | RecordFilterListRules;
 
-export type APIMethodFn = (locale: string, strings: string[], attempt: number) => Promise<string[]>;
+export type APIMethodFn = (locale: string, strings: string[], attempt?: number) => Promise<string[]>;

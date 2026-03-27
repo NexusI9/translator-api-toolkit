@@ -13,16 +13,19 @@ import { Logger } from "./logger";
 import { Dico } from "./types";
 import { getJsonFiles, getTargetPath, readOrCreateFile } from "./utils";
 import { ArgsManager } from "./args";
+import { Timer } from "./timer";
 
 import dotenv from "dotenv";
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+
 
 const cache = new Cache();
 const apiManager = new APIManager();
 const jsonProcessor = new JSONProcessor();
 const logger = new Logger();
 const args = new ArgsManager();
+const timer = new Timer();
 
 dotenv.config();
 
@@ -167,29 +170,37 @@ async function main() {
 		return console.log("Cancelled. Exiting program...");
 
 
-	// Translate
-	const inputType = await args.getInputType();
-	switch (inputType) {
+	timer.start();
+	{
+		// Translate
+		const inputType = await args.getInputType();
+		switch (inputType) {
 
-		case "FILE":
-			await processLocale(args.input, args);
-			break;
+			case "FILE":
+				await processLocale(args.input, args);
+				break;
 
-		case "DIR":
-			const files = await getJsonFiles(args.input);
-			for (const file of files)
-				await processLocale(file, args);
-			break;
+			case "DIR":
+				const files = await getJsonFiles(args.input);
+				for (const file of files)
+					await processLocale(file, args);
+				break;
+		}
 	}
+	const time = timer.end();
 
 	// Write Logs
 	if (args.log) {
+
+		logger.setApiMethod(args.api);
+		logger.setElapsedTime(time);
 		await logger.write();
 		await logger.writeCSV();
+
 	}
 
 	console.log('------------------------------------------');
-	console.log(`Total characters translated: ${logger.charactersCount}`);
+	console.log(`Total characters translated: ${logger.charactersCount} (${time}ms)`);
 	if (!args.skipCache)
 		console.log(`Cache was hit ${cache.stat.hit} times and saved ${cache.stat.characters} characters`);
 }

@@ -1,7 +1,7 @@
 import { LOCALES } from "src/constants";
 import { spawn } from "child_process";
 
-const LIBRE_TRANSLATE_LOADED_LOCALES = ["en", "fr", "zt"] as const;
+const LIBRE_TRANSLATE_LOADED_LOCALES = ["en", "fr", "zt", "th"] as const;
 
 // Map standard locales to LibreTranslate format (the tricky one it zh-TW which doesn't simply become zh but zt)
 // See: https://docs.libretranslate.com/guides/supported_languages/
@@ -13,6 +13,7 @@ const LIBRE_TRANSLATE_LOCALES_MAP: Partial<Record<keyof typeof LOCALES, typeof L
 	"fr-FR": "fr",
 	"fr-CA": "fr",
 	"zh-TW": "zt",
+	"th-TH": "th",
 };
 
 /**
@@ -88,7 +89,7 @@ async function isLibreRunning(serverURL: string) {
 }
 
 
-export async function LibreTranslate(locale: string, strings: string[], attempt: number = 1) {
+export async function LibreTranslate(locale: string, strings: string[], _attempt: number = 1) {
 
 	// Libre Translate Config
 	const localServerHost = process.env.LIBRE_TRANSLATE_SERVER_HOST;
@@ -133,10 +134,10 @@ export async function LibreTranslate(locale: string, strings: string[], attempt:
 	/*
 	Typically return:
 			 {
-		            translatedText: '內容\n' +
-			          '瀏覽最新 Web 設計工具\n' +
-			          '使用繁多的設計工具改善和放宽工作流程\n' +
-			          '模板\n' 
+								translatedText: '內容\n' +
+								'瀏覽最新 Web 設計工具\n' +
+								'使用繁多的設計工具改善和放宽工作流程\n' +
+								'模板\n' 
 			 }
 	 */
 

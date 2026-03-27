@@ -11,11 +11,12 @@ const DEEPL_LOCALES_MAP: Partial<Record<keyof typeof LOCALES, deepl.TargetLangua
 	"fr-FR": "fr",
 	"fr-CA": "fr",
 	"zh-TW": "zh-HANT",
+	"th-TH": "th",
 };
 
 
 
-export async function Deepl(locale: string, strings: string[], attempt: number = 1): Promise<string[]> {
+export async function Deepl(locale: string, strings: string[], _attempt: number = 1): Promise<string[]> {
 
 	if (!process.env.DEEPL_API_KEY)
 		throw new Error("Unable to find DeepL API Key, make sure you've set up DEEPL_API_KEY in the environment file.");
