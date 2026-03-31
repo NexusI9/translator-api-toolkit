@@ -28,9 +28,9 @@ export class ArgsManager {
 	// Skip cache checking
 	skipCache: Boolean;
 	// Entierly skip split string from punctuation
-	skipSplitStr: Boolean;
+	splitStringStrong: Boolean;
 	// Skip split string for weak punctuation (only split with strong punctuation)
-	skipSplitStrWeak: Boolean;
+	splitStringWeak: Boolean;
 
 	constructor() {
 		this.sourceLocale = Object.keys(LOCALES)[0] as keyof typeof LOCALES;
@@ -44,8 +44,8 @@ export class ArgsManager {
 		this.override = false;
 		this.skipCache = false;
 		this.maxChar = 0;
-		this.skipSplitStr = false;
-		this.skipSplitStrWeak = false;
+		this.splitStringStrong = false;
+		this.splitStringWeak = false;
 	}
 
 	isObjectKey(key: string) {
@@ -160,8 +160,8 @@ export class ArgsManager {
 			["Dry Run"]: this.dryRun,
 			["Override"]: this.override,
 			["Skip Cache"]: this.skipCache,
-			["Skip Split String (All)"]: this.skipSplitStr,
-			["Skip Split String (Weak)"]: this.skipSplitStrWeak || this.skipSplitStr,
+			["Split String (Strong)"]: this.splitStringStrong,
+			["Split String (Weak)"]: this.splitStringWeak,
 		});
 
 	}

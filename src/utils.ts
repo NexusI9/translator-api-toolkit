@@ -94,14 +94,15 @@ export function sleep(ms: number) {
  */
 export function getSplitStringTypeFromArgs(args: ArgsManager): JSONProcessorSplitStringType {
 
-	let splitStringType: JSONProcessorSplitStringType = "ALL"; // by default split with all punctuation
+	if (args.splitStringStrong && args.splitStringWeak)
+		return "ALL";
 
-	if (args.skipSplitStr)
-		splitStringType = "NONE"; // entierly skip split string process
+	else if (args.splitStringStrong)
+		return "STRONG"; // entierly skip split string process
 
-	else if (args.skipSplitStrWeak)
-		splitStringType = "STRONG"; // only split string according to strong punctuation
-  
-	return splitStringType;
+	else if (args.splitStringWeak)
+		return "WEAK"; // only split string according to strong punctuation
+
+	return "NONE";
 
 }

@@ -11,7 +11,7 @@ import { Dico, RecordFilter } from "./types";
 
 export const JSON_PROCESSOR_NO_PREFIX = "";
 
-export type JSONProcessorSplitStringType = "NONE" | "ALL" | "STRONG";
+export type JSONProcessorSplitStringType = "NONE" | "ALL" | "STRONG" | "WEAK";
 
 export class JSONProcessor {
 
@@ -39,28 +39,31 @@ export class JSONProcessor {
 		type: JSONProcessorSplitStringType = "NONE"
 	): string[] {
 
-		if (type === "NONE")
-			return [text];
+		if (type === "NONE") return [text];
 
-		let splitText: string[] = [];
+		let segments: string[] = [text];
 
-		// if strong or all, split with strong punctuation
-		if (type === "STRONG" || type === "ALL")
-			splitText = text.split(REGEXP_SPLIT_STRONG_PUNCTUATION); // split strong punctuation + newline
+		// Strong punctuation
+		if (type === "STRONG" || type === "ALL") {
+			segments = segments.flatMap(seg => seg.split(REGEXP_SPLIT_STRONG_PUNCTUATION));
+		}
 
-		// if all, then split with weak punctuation as well 
-		if (type === "ALL") {
-			splitText = splitText.flatMap(sentence => {
-				// split long sentences by comma
-				if (sentence.length > SPLIT_COMMA_LENGTH_LIMIT)
-					return sentence.split(REGEXP_SPLIT_WEAK_PUNCTUATION);
-
-				return [sentence];
+		// Weak punctuation
+		if (type === "WEAK" || type === "ALL") {
+			segments = segments.flatMap(seg => {
+				// Only split by weak punctuation if the segment is long
+				if (seg.length > SPLIT_COMMA_LENGTH_LIMIT) {
+					return seg.split(REGEXP_SPLIT_WEAK_PUNCTUATION);
+				}
+				return [seg];
 			});
 		}
 
-		return splitText.map(s => s.trim()).filter(Boolean);
+		// Clean up
+		return segments.map(s => s.trim()).filter(Boolean);
 	}
+
+
 	/**
 	 * Flatten the json structure:
 	 *

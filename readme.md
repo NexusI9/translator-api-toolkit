@@ -73,8 +73,8 @@ npm run start -- \
 | -dry-run | Dry run (no API calls) |
 | -override | Override already translated values |
 | -skip-cache | Skip cache checking |
-| -skip-spltr-str | Entierly skip splitting string into smaller chunks for all punctuations (strong + weak). |
-| -skip-split-str-weak | Skip splitting string into smaller chunks for weak punctuation only. |
+| -split-string-strong | Split strings into small chunk from strong punctuation |
+| -split-string-weak |  Split strings into small chunk from weaker punctuation |
 
 ---
 
