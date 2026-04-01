@@ -2,6 +2,15 @@ import { LOCALES } from "./constants";
 import { Method } from "./types";
 import fs from "fs/promises";
 
+/**
+|--------------------------------------------------
+| ArgsManager
+|
+| Read and convert command line argument into a
+| valid configuration for the translation process.
+|
+|--------------------------------------------------
+ */
 export class ArgsManager {
 
 	// define original file locale (en-US, fr-FR, zh-TW)
@@ -48,14 +57,37 @@ export class ArgsManager {
 		this.splitStringWeak = false;
 	}
 
+	/**
+	 * If the given key belongs to the ArgsManager Object.
+	 * This is helpful to automatically map the input arguments to
+	 * the object internal attributes
+	 *
+	 * @param key - The attribute we wish to check
+	 * @return True if key is in object, false if not
+	 *
+	 */
 	isObjectKey(key: string) {
 		return key in this;
 	}
 
+
+	/**
+	 * Convert the given string to camel case.
+	 * Primarily used to automatically convert and map args-name to argsName
+	 * so it suits object attributes.
+	 *
+	 * @param str - The Value to convert
+	 * @returns The Value converted to camelCase
+	 *
+	 */
 	private toCamelCase(str: string): string {
 		return str.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
 	}
 
+	/**
+	 * Convert passed commend line arguments and map their value to
+	 * object instance internal attributes.
+	 */
 	decode() {
 		const processedArgs = process.argv.reduce((args: any, arg) => {
 
@@ -85,6 +117,14 @@ export class ArgsManager {
 		});
 	}
 
+	/**
+	 * Analyse and validate target and source locale command arguments.
+	 *
+	 * @param locale - The locale to validate
+	 * @returns The locale if found in the valid locale list.
+	 * @exception Throws error if no valid locale were found.
+	 *
+	 */
 	#validateLocale(locale: string | null): keyof typeof LOCALES {
 
 		if (!locale)
@@ -113,7 +153,11 @@ export class ArgsManager {
 
 	};
 
-
+	/**
+	 * Ensure essential arguments are defined.
+	 *
+	 * @exception Throws error if necessary arguments are not defined.
+	 */
 	async validate() {
 
 		this.targetLocale = this.#validateLocale(this.targetLocale) as keyof typeof LOCALES;
@@ -135,6 +179,15 @@ export class ArgsManager {
 
 	}
 
+	/**
+	 * Provide the type of argument input path.
+	 * Used during validation to make sure the directory or file exists
+	 * as well as prior translating to define if we shall read and translate
+	 * only one file or a whole directory.
+	 *
+	 * @returns FILE or DIR according to the path type or INVALID if the path doesn't exists
+	 *
+	 */
 	async getInputType(): Promise<"FILE" | "DIR" | "INVALID"> {
 		const stat = await fs.stat(this.input);
 		if (stat.isFile())
@@ -146,6 +199,12 @@ export class ArgsManager {
 		return "INVALID";
 	}
 
+	/**
+	 * Prints out the given arguments.
+	 * Used before running the translation to make
+	 * sure the configuration is correct and prevent
+	 * unwanted settings (dry run, wrong API etc...)
+	 */
 	print() {
 
 		console.table({

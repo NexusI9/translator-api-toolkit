@@ -2,8 +2,8 @@ import fs from "fs/promises";
 import path from "path";
 import { BATCH_SIZE } from "./constants";
 import { Cache } from "./cache";
-import { JSON_PROCESSOR_NO_PREFIX, JSONProcessor, JSONProcessorSplitStringType, } from "./json-processor";
-import { APIManager } from "./manager/api-manager";
+import { JSON_PROCESSOR_NO_PREFIX, JSONProcessor } from "./json-processor";
+import { APIManager } from "./api-manager";
 import { Logger } from "./logger";
 import { Dico } from "./types";
 import { getJsonFiles, getSplitStringTypeFromArgs, getTargetPath, readOrCreateFile } from "./utils";
@@ -13,12 +13,10 @@ import { Timer } from "./timer";
 import dotenv from "dotenv";
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
-import { BatchManager } from "./manager/batch-manager";
 
 
 const cache = new Cache();
 const apiManager = new APIManager();
-const batchManager = new BatchManager({ batchSize: BATCH_SIZE });
 const jsonProcessor = new JSONProcessor();
 const logger = new Logger();
 const args = new ArgsManager();
@@ -32,15 +30,14 @@ async function translateBatch(
 		{ toTranslate: Dico, flatTarget: Dico, cache?: Cache }, args: ArgsManager) {
 
 	const keys = Object.keys(toTranslate);
-	const { batchSize } = batchManager;
 
-	for (let i = 0; i < keys.length; i += batchSize) {
+	for (let i = 0; i < keys.length; i += BATCH_SIZE) {
 
 		const verboseBatchOutput: Dico = {};
 		if (args.verbose)
-			console.log(`Batch ${i / batchSize}:`);
+			console.log(`Batch ${i / BATCH_SIZE}:`);
 
-		const batchKeys = keys.slice(i, i + batchSize);
+		const batchKeys = keys.slice(i, i + BATCH_SIZE);
 
 		// get the batch of values to translate
 		const batchValues = batchKeys.map(k => {
@@ -103,7 +100,7 @@ async function processLocale(file: string, args: ArgsManager) {
 	if (!args.skipCache)
 		await cache.load(args.targetLocale);
 
-	const toTranslate = batchManager.run(flatSource, flatTarget, args.targetLocale, jsonProcessor, args.skipCache ? undefined : cache, args.override);
+	const toTranslate = jsonProcessor.removeDoublon(flatSource, flatTarget, args.targetLocale, args.skipCache ? undefined : cache, args.override);
 
 
 	// if Dry Run Mode, don't do any API call and output batch keys.

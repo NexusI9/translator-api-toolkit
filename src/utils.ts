@@ -3,8 +3,13 @@ import path from "path";
 import { ArgsManager } from "./args";
 import { JSONProcessorSplitStringType } from "./json-processor";
 
+
 /**
-	Traverse a directory and subdir and return an array of all the JSON files
+ * Traverse a directory and subdir and return an array of all the JSON files
+ *
+ * @param dir - The directory to traverse
+ * @returns An array of string containing the files
+ * 
  */
 export async function getJsonFiles(dir: string): Promise<string[]> {
 	const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -25,7 +30,16 @@ export async function getJsonFiles(dir: string): Promise<string[]> {
 }
 
 
-
+/**
+ * Create the path for the target file 
+ *
+ * @param file - The input file to be processed
+ * @param args.input - The input file or directory
+ * @param args.output - The output directory used as the root
+ * @param args.targetLocale - The locale used as parent folder name
+ * @returns The path where the target/ translated file shall be output
+ * 
+ */
 export async function getTargetPath(file: string, args: { input: string; output: string; targetLocale: string }): Promise<string> {
 	const inputPath = path.resolve(args.input);
 	const filePath = path.resolve(file);
@@ -46,26 +60,30 @@ export async function getTargetPath(file: string, args: { input: string; output:
 
 
 /**
-	 Read a specific file. Create it if does not exists. Return undefined failed to create it.
+ * Read a specific file. Create it if does not exists.
+ *
+ * @param filePath - The path of the file to read or create (usually the Target file)
+ * @returns The parsed json if exist, empty object if newly created or undefined if unable to create.
+ * 
  */
-export async function readOrCreateFile(filename: string) {
+export async function readOrCreateFile(filePath: string) {
 
 	let json: any = {};
 
 	try {
-		json = JSON.parse(await fs.readFile(filename, "utf8"));
+		json = JSON.parse(await fs.readFile(filePath, "utf8"));
 	} catch (err: any) {
 
 		if (err.code === "ENOENT") {
 
 			// File does not exist, create it
-			await fs.mkdir(path.dirname(filename), { recursive: true });
-			await fs.writeFile(filename, "{}");
+			await fs.mkdir(path.dirname(filePath), { recursive: true });
+			await fs.writeFile(filePath, "{}");
 
 			return {};
 		}
 
-		console.error(`Error while attempting to parse the file "${filename}".`);
+		console.error(`Error while attempting to parse the file "${filePath}".`);
 		return undefined;
 	}
 
@@ -74,6 +92,15 @@ export async function readOrCreateFile(filename: string) {
 }
 
 
+/**
+ * Create a delay
+ * @description Used during API calls cause sometimes the API may send brandwidth error.
+ * So we need a function to wait N seconds before sending the request again. 
+ *
+ * @param ms - The number of ms to wait
+ * @returns the resolved timeout after the countdown is finished
+ * 
+ */
 export function sleep(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
