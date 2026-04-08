@@ -108,15 +108,11 @@ export function sleep(ms: number) {
 /**
  * Returns the split string method according to arguments
  *
- * In arguments we can basically :
- *
- * 1. Not skip the string split process by not declaring any flag (default behavior),
- *    in which case the strings will be split by all type of punctuations (strong and weak)
- *
- * 2. Skipping entierly the string split sprocess with the flag -skip-split-str
- *
- * 3. Skipping split string only for weak punctuation with the flag -skip-split-str-weak,
- *    this will giver higher context to API for eventual better translation.
+ * @param args - The arguments passed in the command line
+ * @returns "ALL"    if args.splitStringStrong and args.splitStringWeak are enabled
+ * @returns "STRONG" if args.splitStringStrong is enabled
+ * @returns "WEAK"   if args.splitStringWeak is enabled
+ * @returns "NONE"   if none of the above are enabled
  *
  */
 export function getSplitStringTypeFromArgs(args: ArgsManager): JSONProcessorSplitStringType {
@@ -125,10 +121,10 @@ export function getSplitStringTypeFromArgs(args: ArgsManager): JSONProcessorSpli
 		return "ALL";
 
 	else if (args.splitStringStrong)
-		return "STRONG"; // entierly skip split string process
+		return "STRONG"; // only split string according to strong punctuation
 
 	else if (args.splitStringWeak)
-		return "WEAK"; // only split string according to strong punctuation
+		return "WEAK"; // only split string according to weak punctuation
 
 	return "NONE";
 

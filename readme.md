@@ -7,6 +7,7 @@ Supported providers:
 - Gemini
 - Google Cloud Translate
 - DeepL
+- LibreTranslate
 
 The toolkit analyzes files beforehand and uses a **cache system** to avoid translating identical values multiple times.
 
